@@ -17,7 +17,7 @@ public class ProducerApp {
     
     public static void main(String[] argv)throws Exception {
         if (argv.length != 1) {
-            logger.error("Please specify 1 parameters ");
+            logger.error("Please specify Topic Name");
             System.exit(-1);
         }
         String topicName = argv[0];

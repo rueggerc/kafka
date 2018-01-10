@@ -27,8 +27,11 @@ public class ConsumerApp {
         String topicName = argv[0];
         String groupId = argv[1];
 
+        // Start Thread
         ConsumerThread consumerRunnable = new ConsumerThread(topicName,groupId);
         consumerRunnable.start();
+        
+        // Wait or user to type "exit" to shutdown
         String line = "";
         while (!line.equals("exit")) {
             line = in.next();
@@ -38,7 +41,7 @@ public class ConsumerApp {
         consumerRunnable.join();
     }
 
-    private static class ConsumerThread extends Thread{
+    private static class ConsumerThread extends Thread {
         private String topicName;
         private String groupId;
         private KafkaConsumer<String,String> kafkaConsumer;
@@ -55,9 +58,11 @@ public class ConsumerApp {
             configProperties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
             configProperties.put(ConsumerConfig.CLIENT_ID_CONFIG, "simple");
 
-            // Figure out where to start processing messages from
+            // Create Consumer and subscribe to Topic
             kafkaConsumer = new KafkaConsumer<String, String>(configProperties);
             kafkaConsumer.subscribe(Arrays.asList(topicName));
+            
+            
             // Start processing messages
             try {
                 while (true) {

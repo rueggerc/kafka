@@ -1,4 +1,4 @@
-apply plugin: 'java-library'
+apply plugin: 'java'
 apply plugin: 'eclipse'
 
 repositories {
@@ -13,3 +13,15 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
+
+// Create a single Jar with all dependencies
+version = '1.0'
+task fatJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'Kafka Example',
+        	       'Implementation-Version': version
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
