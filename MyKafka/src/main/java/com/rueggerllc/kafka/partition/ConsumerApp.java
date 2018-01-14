@@ -1,40 +1,46 @@
 package com.rueggerllc.kafka.partition;
 
-import org.apache.kafka.clients.consumer.*;
-import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.errors.WakeupException;
-
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.Scanner;
 
-/**
- * Created by sunilpatil on 12/28/15.
- */
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.WakeupException;
+import org.apache.log4j.Logger;
+
+
 public class ConsumerApp {
+	
+	private static final Logger logger = Logger.getLogger(ConsumerApp.class);
     private static Scanner in;
-    private static boolean stop = false;
+    private static final String BROKERS = "captain:9092,godzilla:9092,darwin:9092";
 
     public static void main(String[] argv) throws Exception {
         if (argv.length != 2) {
-            System.err.printf("Usage: %s <topicName> <groupId>\n",
-                    ConsumerApp.class.getSimpleName());
+            System.err.printf("Usage: %s <topicName> <groupId>\n", ConsumerApp.class.getSimpleName());
             System.exit(-1);
         }
         in = new Scanner(System.in);
         String topicName = argv[0];
         String groupId = argv[1];
 
+        // Start Main Thread
         ConsumerThread consumerThread = new ConsumerThread(topicName, groupId);
         consumerThread.start();
+        
+        // Wait for Exit command
         String line = "";
         while (!line.equals("exit")) {
             line = in.next();
         }
         consumerThread.getKafkaConsumer().wakeup();
-        System.out.println("Stopping consumer .....");
+        logger.info("Stopping consumer .....");
         consumerThread.join();
     }
 
@@ -49,8 +55,9 @@ public class ConsumerApp {
         }
 
         public void run() {
+        	logger.info("Consumer Startup topic=" + topicName + " Group=" + groupId);
             Properties configProperties = new Properties();
-            configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+            configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
             configProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
             configProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
             configProperties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
@@ -73,10 +80,10 @@ public class ConsumerApp {
                         System.out.println(record.value());
                 }
             } catch (WakeupException ex) {
-                System.out.println("Exception caught " + ex.getMessage());
+                logger.error("Exception caught " + ex.getMessage());
             } finally {
                 kafkaConsumer.close();
-                System.out.println("After closing KafkaConsumer");
+                logger.info("After closing KafkaConsumer");
             }
         }
 
