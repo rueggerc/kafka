@@ -26,13 +26,19 @@ public class ConsumerApp {
             System.err.printf("Usage: %s <topicName> <groupId>\n", ConsumerApp.class.getSimpleName());
             System.exit(-1);
         }
+        
+        logger.info("Partition ConsumerApp Startup");
+        
         in = new Scanner(System.in);
         String topicName = argv[0];
         String groupId = argv[1];
 
         // Start Main Thread
+        logger.info("Consumer Startup topic=" + topicName + " Group=" + groupId);
         ConsumerThread consumerThread = new ConsumerThread(topicName, groupId);
         consumerThread.start();
+        
+        logger.info("Main Thread Started");
         
         // Wait for Exit command
         String line = "";
@@ -55,7 +61,7 @@ public class ConsumerApp {
         }
 
         public void run() {
-        	logger.info("Consumer Startup topic=" + topicName + " Group=" + groupId);
+        	System.out.println("Consumer Thread Startup topic=" + topicName + " Group=" + groupId);
             Properties configProperties = new Properties();
             configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
             configProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
