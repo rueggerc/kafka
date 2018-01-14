@@ -15,7 +15,7 @@ import org.apache.log4j.Logger;
 public class ConsumerApp {
 	
 	private static final Logger logger = Logger.getLogger(ConsumerApp.class);
-	
+	private static final String BROKERS = "captain:9092,godzilla:9092,darwin:9092";
     private static Scanner in;
 
     public static void main(String[] argv)throws Exception{
@@ -23,6 +23,10 @@ public class ConsumerApp {
             logger.error(String.format("Usage: %s <topicName> <groupId>\n", ConsumerApp.class.getSimpleName()));
             System.exit(-1);
         }
+        
+        logger.info("============== SIMPLE CONSUMER BEGIN ==============");
+        
+        
         in = new Scanner(System.in);
         String topicName = argv[0];
         String groupId = argv[1];
@@ -52,7 +56,9 @@ public class ConsumerApp {
         }
         public void run() {
             Properties configProperties = new Properties();
-            configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+            // configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+            configProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+            configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
             configProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer");
             configProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
             configProperties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);

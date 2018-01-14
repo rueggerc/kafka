@@ -19,9 +19,8 @@ public class ConsumerApp {
 	
 	private static final Logger logger = Logger.getLogger(ConsumerApp.class);
     private static Scanner in;
-    // private static final String BROKERS = "captain:9092,godzilla:9092,darwin:9092";
-    private static final String BROKERS = "captain:9092";
-
+    private static final String BROKERS = "captain:9092,godzilla:9092,darwin:9092";
+ 
     public static void main(String[] argv) throws Exception {
         if (argv.length != 2) {
             System.err.printf("Usage: %s <topicName> <groupId>\n", ConsumerApp.class.getSimpleName());
@@ -62,40 +61,69 @@ public class ConsumerApp {
         }
 
         public void run() {
-        	System.out.println("=== Consumer Thread Startup topic=" + topicName + " Group=" + groupId);
-            Properties configProperties = new Properties();
-            configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
-            configProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-            configProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-            configProperties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-
-            // Figure out where to start processing messages from
-            kafkaConsumer = new KafkaConsumer<String, String>(configProperties);
-            kafkaConsumer.subscribe(Arrays.asList(topicName), new ConsumerRebalanceListener() {
-                public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-                    System.out.printf("%s topic-partitions are revoked from this consumer\n", Arrays.toString(partitions.toArray()));
-                }
-                public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-                    System.out.printf("%s topic-partitions are assigned to this consumer\n", Arrays.toString(partitions.toArray()));
-                }
-            });
-            
-            
-            // Start processing messages
-            try {
-                while (true) {
-                    ConsumerRecords<String, String> records = kafkaConsumer.poll(100);
-                    logger.info("Checking...");
-                    for (ConsumerRecord<String, String> record : records) {
-                        logger.info(record.value());
-                    }
-                }
-            } catch (WakeupException ex) {
-                logger.error("Exception caught " + ex.getMessage());
-            } finally {
-                kafkaConsumer.close();
-                logger.info("After closing KafkaConsumer");
-            }
+        	try {
+	        	System.out.println("=== Consumer Thread Startup topic=" + topicName + " Group=" + groupId);
+	        	logger.info("BROKERS=" + BROKERS);
+	            Properties configProperties = new Properties();
+	            configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
+	            configProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+	            configProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+	            configProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+	            configProperties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+	            configProperties.put(ConsumerConfig.CLIENT_ID_CONFIG, "JavaClient");
+	
+	            
+	            // Figure out where to start processing messages from
+	            kafkaConsumer = new KafkaConsumer<String, String>(configProperties);
+//	            System.out.println("CONSUMER BUILT");
+//	            System.out.println("TOPIC NAME=" + topicName);
+	            
+//	            List<String> topics = new ArrayList<String>();
+//	            topics.add(topicName);
+//	            kafkaConsumer.subscribe(topics);
+	            
+	       
+	            
+//	            Map<String, List<PartitionInfo>> myTopics = kafkaConsumer.listTopics();
+//	            for (Map.Entry<String, List<PartitionInfo>> entry : myTopics.entrySet()) {
+//	            	logger.info("NEXT KEY= " + entry.getKey());
+//	            }
+//	            
+//	            Set<String> mysubscriptions = kafkaConsumer.subscription();
+//	            for (String next : mysubscriptions) {
+//	            	logger.info("Next subscription=" + mysubscriptions);
+//	            }
+	            
+	            
+	            kafkaConsumer.subscribe(Arrays.asList(topicName), new ConsumerRebalanceListener() {
+	                public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+	                	logger.info(String.format("%s topic-partitions are revoked from this consumer\n", Arrays.toString(partitions.toArray())));
+	                }
+	                public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+	                    logger.info(String.format("%s topic-partitions are assigned to this consumer\n", Arrays.toString(partitions.toArray())));
+	                }
+	            });
+	            
+	            logger.info("===== PARTITION CONSUMER WAITING FOR MESSAGES =====");
+	            // Start processing messages
+	            try {
+	                while (true) {
+	                    ConsumerRecords<String, String> records = kafkaConsumer.poll(100);
+	                    for (ConsumerRecord<String, String> record : records) {
+	                        logger.info(record.value());
+	                    }
+	                }
+	            } catch (WakeupException ex) {
+	                logger.error("Exception caught " + ex.getMessage());
+	            } finally {
+	                kafkaConsumer.close();
+	                logger.info("After closing KafkaConsumer");
+	            }
+        	} catch (Exception e) {
+        		System.out.println("ERROR:\n" + e);
+        	}
+        	System.out.println("WE ARE OUTTA HERE");
+        	
         }
 
         public KafkaConsumer<String, String> getKafkaConsumer() {

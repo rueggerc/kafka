@@ -15,7 +15,9 @@ public class ProducerApp {
     private static Scanner in;
     private static final Logger logger = Logger.getLogger(ProducerApp.class);
     
+    // private static final String BROKERS = "captain:9092";
     private static final String BROKERS = "captain:9092,godzilla:9092,darwin:9092";
+    // private static final String BROKERS = "PLAINTEXT://captain:9092";
     
     public static void main(String[] argv)throws Exception {
         if (argv.length != 1) {
@@ -43,6 +45,7 @@ public class ProducerApp {
 
             producer.send(rec, new Callback() {
                 public void onCompletion(RecordMetadata metadata, Exception exception) {
+                	logger.info("Message Sent");
                     logger.info("Message sent to topic ->" + metadata.topic() + 
                     		    " partition->" + metadata.partition() +
                     		    " stored at offset->" + metadata.offset());
