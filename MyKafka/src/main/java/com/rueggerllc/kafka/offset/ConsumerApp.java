@@ -75,6 +75,7 @@ public class ConsumerApp {
                             System.out.println("Setting offset to begining");
 
                             kafkaConsumer.seekToBeginning(partitions);
+                            //  kafkaConsumer.seekToBeginning(partitions);
                             // kafkaConsumer.seekToBeginning(topicPartition);
                         }else if(startingOffset == -1){
                             System.out.println("Setting it to the end ");

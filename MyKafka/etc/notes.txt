@@ -5,21 +5,21 @@ Tutorial
 https://www.javaworld.com/article/3060078/big-data/big-data-messaging-with-kafka-part-1.html
 https://www.javaworld.com/article/3066873/big-data/big-data-messaging-with-kafka-part-2.html
 
-Start zookeeper
+1. Start zookeeper
 bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
 Port=2181
 
-Start Kafka Server
+2. Start Kafka Server
 bin/kafka-server-start.sh config/server.properties
 Port=9092
 
-Create Topic
+3. Create Topic
 bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
 
-Console Producer
+4. Console Producer
 bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test
 
-Console Consumer
+5. Console Consumer
 bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic test --from-beginning
 
 
@@ -42,3 +42,19 @@ znodes
 Configuration Management
 Leader Election and Consensus
 Naming Service
+
+
+Partition Example:
+==================
+bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 3 --topic part-demo
+
+Kafka Partition Names
+=====================
+
+
+
+
+
+
+
+
