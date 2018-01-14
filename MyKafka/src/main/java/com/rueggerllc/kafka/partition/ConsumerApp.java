@@ -68,7 +68,7 @@ public class ConsumerApp {
             configProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
             configProperties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
 
-            //Figure out where to start processing messages from
+            // Figure out where to start processing messages from
             kafkaConsumer = new KafkaConsumer<String, String>(configProperties);
             kafkaConsumer.subscribe(Arrays.asList(topicName), new ConsumerRebalanceListener() {
                 public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
@@ -78,12 +78,16 @@ public class ConsumerApp {
                     System.out.printf("%s topic-partitions are assigned to this consumer\n", Arrays.toString(partitions.toArray()));
                 }
             });
-            //Start processing messages
+            
+            
+            // Start processing messages
             try {
                 while (true) {
                     ConsumerRecords<String, String> records = kafkaConsumer.poll(100);
-                    for (ConsumerRecord<String, String> record : records)
-                        System.out.println(record.value());
+                    logger.info("Checking...");
+                    for (ConsumerRecord<String, String> record : records) {
+                        logger.info(record.value());
+                    }
                 }
             } catch (WakeupException ex) {
                 logger.error("Exception caught " + ex.getMessage());
