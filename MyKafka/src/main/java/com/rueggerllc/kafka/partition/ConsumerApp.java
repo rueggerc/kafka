@@ -34,7 +34,7 @@ public class ConsumerApp {
         String groupId = argv[1];
 
         // Start Main Thread
-        logger.info("Consumer Startup topic=" + topicName + " Group=" + groupId);
+        logger.info("Consumer Started topic=" + topicName + " Group=" + groupId);
         ConsumerThread consumerThread = new ConsumerThread(topicName, groupId);
         consumerThread.start();
         
@@ -61,7 +61,7 @@ public class ConsumerApp {
         }
 
         public void run() {
-        	System.out.println("Consumer Thread Startup topic=" + topicName + " Group=" + groupId);
+        	System.out.println("=== Consumer Thread Startup topic=" + topicName + " Group=" + groupId);
             Properties configProperties = new Properties();
             configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
             configProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
