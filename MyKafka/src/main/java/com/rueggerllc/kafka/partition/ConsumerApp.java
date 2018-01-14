@@ -19,7 +19,8 @@ public class ConsumerApp {
 	
 	private static final Logger logger = Logger.getLogger(ConsumerApp.class);
     private static Scanner in;
-    private static final String BROKERS = "captain:9092,godzilla:9092,darwin:9092";
+    // private static final String BROKERS = "captain:9092,godzilla:9092,darwin:9092";
+    private static final String BROKERS = "captain:9092";
 
     public static void main(String[] argv) throws Exception {
         if (argv.length != 2) {
