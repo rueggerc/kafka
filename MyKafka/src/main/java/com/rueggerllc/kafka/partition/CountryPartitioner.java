@@ -40,13 +40,15 @@ public class CountryPartitioner implements Partitioner {
         String countryName = ((String) value).split(":")[0];
         if (countryToPartitionMap.containsKey(countryName)) {
             // If the country is mapped to particular partition return it
-            return countryToPartitionMap.get(countryName);
+            int partitionID = countryToPartitionMap.get(countryName);
+            logger.info("Sending to Partition:" + partitionID);
+            return partitionID;
         } else {
         	logger.info("Country Not Specified, compute partitionID");
             // If no country is mapped to particular partition distribute between remaining partitions
             int noOfPartitions = cluster.topics().size();
             int partitionID = value.hashCode()%noOfPartitions + countryToPartitionMap.size();
-            logger.info("Sending to Partition:" + partitionID);
+            logger.info("NoCountry Sending to Partition:" + partitionID);
             return partitionID;
         }
     }
