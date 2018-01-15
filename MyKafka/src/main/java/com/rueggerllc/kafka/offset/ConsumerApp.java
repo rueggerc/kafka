@@ -105,7 +105,7 @@ public class ConsumerApp {
                 while (true) {
                     ConsumerRecords<String, String> records = kafkaConsumer.poll(100);
                     for (ConsumerRecord<String, String> record : records) {
-                        logger.info(record.offset() + "=>" + record.value());
+                        logger.info(record.offset() + "=>" + record.key() + " "  + record.value());
                     }
                     if (startingOffset == -2) {
                     	logger.info("=== Offset CommitSync");
