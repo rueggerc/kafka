@@ -1,5 +1,6 @@
 package com.rueggerllc.kafka.stream;
 
+import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -27,6 +28,11 @@ public class WordCountConsumer {
 	        configProperties.put(ConsumerConfig.GROUP_ID_CONFIG, groupName);
 	        configProperties.put(ConsumerConfig.CLIENT_ID_CONFIG, "wordCount");
 	        
+	        // Create Consumer and subscribe to Topic
+            kafkaConsumer = new KafkaConsumer<String, String>(configProperties);
+            kafkaConsumer.subscribe(Arrays.asList(topicName));
+            	        
+	        // Get Messages
 	        logger.info("Polling For Messages...");
             while (true) {
                 ConsumerRecords<String, String> records = kafkaConsumer.poll(100);
