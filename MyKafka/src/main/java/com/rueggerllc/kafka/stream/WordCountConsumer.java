@@ -1,18 +1,23 @@
 package com.rueggerllc.kafka.stream;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.ValueMapper;
 import org.apache.log4j.Logger;
 
 
@@ -59,37 +64,62 @@ public class WordCountConsumer {
 		try {
 			
 	        logger.info("============== WordCountConsumer BEGIN ==============");
-	        Properties configProperties = new Properties();
-	        // configProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-	        configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
-	        configProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-	        configProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-	        configProperties.put(ConsumerConfig.GROUP_ID_CONFIG, groupName);
-	        configProperties.put(ConsumerConfig.CLIENT_ID_CONFIG, "wordCount");
+	        Properties props = new Properties();
+	        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
+	        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "streams-wordcount");
+	        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
+	        props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
+	        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+	        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+
 	        
-	        // Serializers/deserializers (serde) for String and Long types
-	        final Serde<String> stringSerde = Serdes.String();
-	        final Serde<Long> longSerde = Serdes.Long();
-	         
-	        // Construct a `KStream` from the input topic "streams-plaintext-input", where message values
-	        // represent lines of text (for the sake of this example, we ignore whatever may be stored
-	        // in the message keys).
-	        KStreamBuilder builder = new KStreamBuilder();
-	       
-	        
-	        KStream<String, String> textLines = builder.stream(stringSerde, stringSerde, topicName);
-	        KTable<String, Long> wordCounts = textLines
-	            // Split each text line, by whitespace, into words.
-	            .flatMapValues(value -> Arrays.asList(value.toLowerCase().split("\\W+")))
-	         
-	            // Group the text words as message keys
-	            .groupBy((key, value) -> value)
-	         
-	            // Count the occurrences of each word (message key).
+	        // setting offset reset to earliest so that we can re-run the demo code with the same pre-loaded data
+	        // Note: To re-run the demo, you need to use the offset reset tool:
+	        // https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Streams+Application+Reset+Tool
+	        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+	        StreamsBuilder builder = new StreamsBuilder();
+
+	        KStream<String, String> source = builder.stream("streams-plaintext-input");
+
+	        KTable<String, Long> counts = source
+	            .flatMapValues(new ValueMapper<String, Iterable<String>>() {
+	                @Override
+	                public Iterable<String> apply(String value) {
+	                    return Arrays.asList(value.toLowerCase(Locale.getDefault()).split(" "));
+	                }
+	            })
+	            .groupBy(new KeyValueMapper<String, String, String>() {
+	                @Override
+	                public String apply(String key, String value) {
+	                    return value;
+	                }
+	            })
 	            .count();
-	         
-	        // Store the running counts as a changelog stream to the output topic.
-	        wordCounts.toStream().to("streams-wordcount-output", Produced.with(Serdes.String(), Serdes.Long()));	        
+
+	        // need to override value serde to Long type
+	        counts.toStream().to("streams-wordcount-output", Produced.with(Serdes.String(), Serdes.Long()));
+       
+	        
+	        final KafkaStreams streams = new KafkaStreams(builder.build(), props);
+	        final CountDownLatch latch = new CountDownLatch(1);
+
+	        // attach shutdown handler to catch control-c
+	        Runtime.getRuntime().addShutdownHook(new Thread("streams-wordcount-shutdown-hook") {
+	            @Override
+	            public void run() {
+	                streams.close();
+	                latch.countDown();
+	            }
+	        });
+
+	        try {
+	            streams.start();
+	            latch.await();
+	        } catch (Throwable e) {
+	            System.exit(1);
+	        }
+	        System.exit(0);
 	        
 	        
 			
