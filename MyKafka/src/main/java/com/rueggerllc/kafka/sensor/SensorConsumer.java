@@ -1,4 +1,4 @@
-package com.rueggerllc.kafka.simple;
+package com.rueggerllc.kafka.sensor;
 
 import java.util.Arrays;
 import java.util.Properties;
@@ -12,21 +12,15 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.apache.log4j.Logger;
 
 
-public class ConsumerApp {
+public class SensorConsumer {
 	
-	private static final Logger logger = Logger.getLogger(ConsumerApp.class);
+	private static final Logger logger = Logger.getLogger(SensorConsumer.class);
 	private static final String BROKERS = "captain:9092,godzilla:9092,darwin:9092";
-	// private static final String BROKERS = "localhost:9092";
-	
-	private static final String STARTPOS = "earliest";
-	// private static final String STARTPOS = "latest";
-	
-	
     private static Scanner in;
 
     public static void main(String[] argv)throws Exception{
         if (argv.length != 2) {
-            logger.error(String.format("Usage: %s <topicName> <groupId>\n", ConsumerApp.class.getSimpleName()));
+            logger.error(String.format("Usage: %s <topicName> <groupId>\n", SensorConsumer.class.getSimpleName()));
             System.exit(-1);
         }
         
@@ -42,7 +36,6 @@ public class ConsumerApp {
         consumerRunnable.start();
         
         // Wait or user to type "exit" to shutdown
-        logger.info("Type exit to stop");
         String line = "";
         while (!line.equals("exit")) {
             line = in.next();
@@ -64,8 +57,7 @@ public class ConsumerApp {
         public void run() {
             Properties configProperties = new Properties();
             // configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-            configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
-            configProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, STARTPOS);
+            configProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
             configProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
             configProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer");
             configProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
@@ -76,17 +68,6 @@ public class ConsumerApp {
             kafkaConsumer = new KafkaConsumer<String, String>(configProperties);
             kafkaConsumer.subscribe(Arrays.asList(topicName));
             
-            // Start Position
-            // kafkaConsumer.seekToBeginning(partitions);
-            // kafkaConsumer.seekToEnd(partitions);
-           
-            // Start At Beginning
-            kafkaConsumer.poll(0);
-            kafkaConsumer.seekToBeginning(kafkaConsumer.assignment());
-           
-           	int partition = 0;
-           	int offset = 0;
-        	// kafkaConsumer.seek(partition, offset);
             
             // Start processing messages
             try {
@@ -96,8 +77,8 @@ public class ConsumerApp {
                     	logger.info(record.value());
                     }
                 }
-            } catch(WakeupException ex){
-                logger.error("Exception caught " + ex.getMessage());
+            } catch(WakeupException e){
+                logger.error("Exception caught " + e);
             } finally{
                 kafkaConsumer.close();
                 logger.error("After closing KafkaConsumer");
